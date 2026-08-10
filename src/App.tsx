@@ -23,13 +23,22 @@ function App(){
 
   const [moves, setMoves] = useState<BattleRow[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [searchInput, setSearchInput] = useState('garchomp')
+  const [selectedPokemon, setSelectedPokemon] = useState('garchomp')
+  const [pokemonName, setPokemonName] = useState('')
 
   useEffect(() => {
 
-    async function fetchGarchompData() {
+    async function fetchPokemonData() {
+
       try {
+
+        setMoves([])
+        setError(null)
+        setPokemonName('')
+
         const response = await fetch(
-          'https://championsbattledata.com/api/battle/Doubles/garchomp',
+          `https://championsbattledata.com/api/battle/Doubles/${selectedPokemon}`,
         )
 
         if (!response.ok) {
@@ -37,6 +46,8 @@ function App(){
         }
 
         const data: BattleDataResponse = await response.json()
+
+        setPokemonName(data.pokemon)
 
         const moveRows = data.rows
         .filter((row) => row.category === 'move')
@@ -57,14 +68,39 @@ function App(){
       }
     }
 
-    fetchGarchompData()
+    fetchPokemonData()
     
-  }, [])
+  }, [selectedPokemon])
+
+  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const normalizedInput = searchInput.trim().toLowerCase()
+
+    if (normalizedInput) {
+      setSelectedPokemon(normalizedInput)
+    }
+  }
 
   return (
     <main>
       <h1>Champion's Lab</h1>
-      <h2>Garchomp</h2>
+
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="pokemon-search">Pokémon</label>
+
+        <input
+          id="pokemon-search"
+          type="text"
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+        />
+
+        <button type="submit">Search</button>
+      </form>
+
+      {pokemonName && <h2>{pokemonName}</h2>}
+
       {error ? (
         <p>Unable to load move data: {error}</p>
       ) : moves.length > 0 ? (
