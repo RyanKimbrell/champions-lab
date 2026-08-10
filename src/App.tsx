@@ -1,20 +1,63 @@
 import { useEffect, useState } from "react"
-import { fetchBattleData } from "./api/champions"
+import { fetchBattleData, fetchPokemonIndex, getAssetUrl } from "./api/champions"
 import { getTopMoves } from "./data/moves"
+import { buildPokemonSearchOptions } from "./data/pokemon"
+import PokemonSearch from "./components/PokemonSearch"
 import type { BattleRow } from "./types/battleData"
+import type { PokemonIndexEntry, PokemonSearchOption } from "./types/pokemon"
 
 
 
 function App(){
 
+  /*================================
+  * State and Variable Declarations
+  * ===============================*/
+
+  // State declarations
   const [moves, setMoves] = useState<BattleRow[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [searchInput, setSearchInput] = useState('garchomp')
+  //const [searchInput, setSearchInput] = useState('garchomp')
   const [selectedPokemon, setSelectedPokemon] = useState('garchomp')
   const [pokemonName, setPokemonName] = useState('')
+  const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([])
+  const [selectedPokemonOption, setSelectedPokemonOption] = useState<PokemonSearchOption | null>(null)
+  
 
+  // Variable derivations
+  const pokemonOptions = buildPokemonSearchOptions(pokemonIndex)
+  const displayedPokemon = 
+    selectedPokemonOption ??
+    pokemonOptions.find(
+      (pokemon) =>
+        pokemon.battleDataId === selectedPokemon &&
+      !pokemon.usesBaseBattleData
+    )
+
+  // load the roster on app start
   useEffect(() => {
 
+    //function definition
+    async function loadPokemonIndex() {
+      try{
+        const pokemon = await fetchPokemonIndex()
+        setPokemonIndex(pokemon)
+      } catch (error) {
+        console.error('Unable to load Pokémon index:', error)
+      }
+    }
+    //function call
+    loadPokemonIndex()
+  }, [])
+
+/*===========================
+* State Changing Hooks
+* ==========================*/
+
+  // fetching pokemon battle data
+  useEffect(() => {
+
+    //function definition
     async function fetchPokemonData() {
 
       try {
@@ -43,38 +86,54 @@ function App(){
       }
     }
 
+    //function call
     fetchPokemonData()
     
   }, [selectedPokemon])
 
-  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault()
 
-    const normalizedInput = searchInput.trim().toLowerCase()
+  /*====================
+  * Function Definitions
+  *====================*/
 
-    if (normalizedInput) {
-      setSelectedPokemon(normalizedInput)
-    }
+  // autocomplete handler
+  function handlePokemonSelect(pokemon: PokemonSearchOption) {
+    setSelectedPokemonOption(pokemon)
+    setSelectedPokemon(pokemon.battleDataId)
   }
 
+  /*===============
+  * Page Rendering
+  * ==============*/
   return (
     <main>
       <h1>Champion's Lab</h1>
 
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="pokemon-search">Pokémon</label>
+      <PokemonSearch
+        options={pokemonOptions}
+        onSelect={handlePokemonSelect}
+      />
 
-        <input
-          id="pokemon-search"
-          type="text"
-          value={searchInput}
-          onChange={(event) => setSearchInput(event.target.value)}
-        />
+      {displayedPokemon && (
+        <>
+          <h2>{displayedPokemon.name}</h2>
 
-        <button type="submit">Search</button>
-      </form>
+          <img
+            src={getAssetUrl(displayedPokemon.sprite)}
+            alt={displayedPokemon.name}
+            width="120"
+            height="120"
+          />
 
-      {pokemonName && <h2>{pokemonName}</h2>}
+          <p>{displayedPokemon.types.join(' / ')}</p>
+
+          {displayedPokemon.usesBaseBattleData && pokemonName && (
+            <p>
+              Battle usage data is reported under {pokemonName}
+            </p>
+          )}
+        </>
+      )}
 
       {error ? (
         <p>Unable to load move data: {error}</p>
