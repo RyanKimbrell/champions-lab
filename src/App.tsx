@@ -1,21 +1,7 @@
 import { useEffect, useState } from "react"
-
-interface BattleRow {
-  position: number
-  category: string
-  rank: number
-  name: string
-  percentage: string
-  percentage_value: number
-}
-
-interface BattleDataResponse {
-  pokemon: string
-  showdownId: string
-  format: string
-  season: string
-  rows: BattleRow[]
-}
+import { fetchBattleData } from "./api/champions"
+import { getTopMoves } from "./data/moves"
+import type { BattleRow } from "./types/battleData"
 
 
 
@@ -37,22 +23,11 @@ function App(){
         setError(null)
         setPokemonName('')
 
-        const response = await fetch(
-          `https://championsbattledata.com/api/battle/Doubles/${selectedPokemon}`,
-        )
-
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`)
-        }
-
-        const data: BattleDataResponse = await response.json()
+        const data = await fetchBattleData(selectedPokemon)
 
         setPokemonName(data.pokemon)
 
-        const moveRows = data.rows
-        .filter((row) => row.category === 'move')
-        .sort((a,b) => a.rank - b.rank)
-        .slice(0,10)
+        const moveRows = getTopMoves(data.rows)
 
         if (moveRows.length === 0) {
           throw new Error('No top move found')
