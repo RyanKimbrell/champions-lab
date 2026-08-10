@@ -21,7 +21,7 @@ interface BattleDataResponse {
 
 function App(){
 
-  const [topMove, setTopMove] = useState<BattleRow | null>(null)
+  const [moves, setMoves] = useState<BattleRow[]>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -38,15 +38,16 @@ function App(){
 
         const data: BattleDataResponse = await response.json()
 
-        const topMoveRow = data.rows.find(
-          (row) => row.category === 'move' && row.rank === 1,
-        )
+        const moveRows = data.rows
+        .filter((row) => row.category === 'move')
+        .sort((a,b) => a.rank - b.rank)
+        .slice(0,10)
 
-        if (!topMoveRow) {
+        if (moveRows.length === 0) {
           throw new Error('No top move found')
         }
 
-        setTopMove(topMoveRow)
+        setMoves(moveRows)
       } catch (error) {
         if (error instanceof Error) {
           setError(error.message)
@@ -66,10 +67,23 @@ function App(){
       <h2>Garchomp</h2>
       {error ? (
         <p>Unable to load move data: {error}</p>
-      ) : topMove ? (
-        <p>
-          Most-used Doubles move: {topMove.name} ({topMove.percentage})
-        </p>
+      ) : moves.length > 0 ? (
+       <div className="move-chart">
+        {moves.map((move) => (
+          <div className="move-row" key={move.name}>
+            <div className="move-label">
+              <span>{move.name}</span>
+              <span>{move.percentage}</span>
+            </div>
+            <div className="move-track">
+              <div 
+                className="move-bar"
+                style={{ width: `${move.percentage_value}%` }}
+              />
+            </div>
+          </div>
+        ))}
+       </div>
       ) : (
         <p>Loading move data...</p>
       )}
