@@ -72,7 +72,7 @@ function App(){
   const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([])
   const [selectedPokemonOption, setSelectedPokemonOption] = useState<PokemonSearchOption | null>(null)
   const [historySnapshots, setHistorySnapshots] = useState<DailyBattleSnapshot[]>([])
-  const [selectedHistoryMove, setSelectedHistoryMove] = useState('')
+  const [selectedHistoryMoves, setSelectedHistoryMoves] = useState<string[]>([])
   const [selectedHistoryDays, setSelectedHistoryDays] = useState<HistoryRange>(7)
   
 
@@ -108,10 +108,18 @@ function App(){
     'move',
     10,
   )
-  const moveHistory = selectedHistoryMove ? getMoveUsageHistory(
-    historySnapshots,
-    selectedHistoryMove,
-  ) : []
+  const historySeries = selectedHistoryMoves
+    .map((moveName) => ({
+      name: moveName,
+      data: getMoveUsageHistory(
+        historySnapshots,
+        moveName,
+      ),
+    }))
+    .filter(
+      (historySeries) =>
+        historySeries.data.length >= 2,
+    )
 
   /*===========================
   * State Change useEffects
@@ -168,7 +176,7 @@ function App(){
         setBattleRows([])
         setError(null)
         setPokemonName('')
-        setSelectedHistoryMove('')
+        setSelectedHistoryMoves([])
 
         // fetching the current battle data
         const data = await fetchBattleData(selectedPokemon)
@@ -188,7 +196,7 @@ function App(){
         )[0]
 
         if (topMove) {
-          setSelectedHistoryMove(topMove.name)
+          setSelectedHistoryMoves([topMove.name])
         }
 
 
@@ -220,6 +228,27 @@ function App(){
   function handlePokemonSelect(pokemon: PokemonSearchOption) {
     setSelectedPokemonOption(pokemon)
     setSelectedPokemon(pokemon.battleDataId)
+  }
+
+  // toggle function
+  function toggleHistoryMove(moveName: string) {
+    setSelectedHistoryMoves((currentMoves) => {
+      if (currentMoves.includes(moveName)) {
+        if(currentMoves.length === 1) {
+          return currentMoves
+        }
+
+        return currentMoves.filter(
+          (name) => name !== moveName,
+        )
+      }
+
+      if (currentMoves.length >= 3) {
+        return currentMoves
+      }
+
+      return [...currentMoves, moveName]
+    })
   }
 
   /*===============
@@ -330,32 +359,55 @@ function App(){
                   ))}
                 </div>
 
-                <select
-                  id="history-move"
-                  value={selectedHistoryMove}
-                  onChange={(event) =>
-                    setSelectedHistoryMove(event.target.value)
-                  }
+                <div
+                  className="history-move-selector"
+                  role="group"
+                  aria-label="Moves to compare"
                 >
-                  {historyMoveOptions.map((move) => (
-                    <option
-                      key={move.name}
-                      value={move.name}
-                    >
-                      {move.name}
-                    </option>
-                  ))}
-                </select>
+                  {historyMoveOptions.map((move) => {
+                    const isSelected =
+                      selectedHistoryMoves.includes(move.name)
+
+                    const selectionLimitReached =
+                      selectedHistoryMoves.length >= 3
+
+                    return (
+                      <button
+                        key={move.name}
+                        type="button"
+                        className={
+                          isSelected
+                            ? 'history-move-button history-move-button-active'
+                            : 'history-move-button'
+                        }
+                        aria-pressed={isSelected}
+                        disabled={
+                          !isSelected &&
+                          selectionLimitReached
+                        }
+                        onClick={() =>
+                          toggleHistoryMove(move.name)
+                        }
+                      >
+                        {move.name}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <p className="history-selection-note">
+                  Compare up to three moves.
+                </p>
               </div>
 
-              {moveHistory.length >= 2 ? (
+              {historySeries.length > 0 ? (
                 <UsageHistoryChart
-                  title={`${selectedHistoryMove} Usage - Last ${selectedHistoryDays} Days`}
-                  data={moveHistory}
+                  title={`Move Usage - Last ${selectedHistoryDays} Days`}
+                  series={historySeries}
                 />
               ) : (
                 <p>
-                  Not enough historical data for {selectedHistoryMove}.
+                  Not enough historical data for the selected moves.
                 </p>
               )}
             </section>

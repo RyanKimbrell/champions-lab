@@ -237,3 +237,52 @@ main {
   color: white;
   border-color: #333;
 }
+
+.history-move-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.history-move-button {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+}
+
+.history-move-button-active {
+  background: #333;
+  color: white;
+  border-color: #333;
+}
+
+.history-move-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.history-selection-note {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.history-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.history-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.history-legend-swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+}
