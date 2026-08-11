@@ -9,10 +9,12 @@ interface TeammateRankingItem {
 
 interface TeammateRankingProps {
     items: TeammateRankingItem[]
+    onSelect: (pokemon: PokemonSearchOption) => void
 }
 
 function TeammateRanking({
     items,
+    onSelect,
 }: TeammateRankingProps) {
     return (
         <section className='teammate-ranking'>
@@ -20,29 +22,38 @@ function TeammateRanking({
 
             <ol className='teammate-list'>
                 {items.map(({ row, pokemon }) => (
-                    <li
-                        className='teammate-card'
-                        key={row.name}
-                    >
-                        <span className='teammate-rank'>
-                            #{row.rank}
-                        </span>
+                    <li key={row.name}>
+                        {pokemon ? (
+                            <button
+                                type='button'
+                                className='teammate-card teammate-card-button'
+                                onClick={() => onSelect(pokemon)}
+                            >
+                                <span className='teammate-rank'>
+                                    #{row.rank}
+                                </span>
 
-                        {pokemon && (
-                            <img
-                                src={getAssetUrl(pokemon.sprite)}
-                                alt=""
-                                width="72"
-                                height="72"
-                            />
-                        )}
+                                <img
+                                    src={getAssetUrl(pokemon.sprite)}
+                                    alt=""
+                                    width="72"
+                                    height="72"
+                                />
 
-                        <strong>{row.name}</strong>
+                                <strong>{row.name}</strong>
 
-                        {pokemon && (
-                            <span className='teammate-types'>
-                                {pokemon.types.join(' / ')}
-                            </span>
+                                <span className='teammate-types'>
+                                    {pokemon.types.join(' / ')}
+                                </span>
+                            </button>
+                        ) : (
+                            <div className='teammate-card'>
+                                <span className='teammate-rank'>
+                                    #{row.rank}
+                                </span>
+
+                                <strong>{row.name}</strong>
+                            </div>
                         )}
                     </li>
                 ))}

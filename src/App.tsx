@@ -219,7 +219,10 @@ function App(){
               </p>
             )
           ) : teammateRows.length > 0 ? (
-            <TeammateRanking items={teammateItems} />
+            <TeammateRanking 
+              items={teammateItems}
+              onSelect={handlePokemonSelect} 
+            />
           ) : (
             <p>No teammate data available.</p>
           )}
