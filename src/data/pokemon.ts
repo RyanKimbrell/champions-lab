@@ -68,3 +68,25 @@ export function matchesPokemonSearch(
     normalizePokemonSearch(term).includes(normalizedQuery),
   )
 }
+
+export function findPokemonSearchOption(
+    options: PokemonSearchOption[],
+    name: string,
+): PokemonSearchOption | undefined {
+    const normalizedName = normalizePokemonSearch(name)
+
+    const exactNameMatch = options.find(
+        (pokemon) =>
+            normalizePokemonSearch(pokemon.name) === normalizedName,
+    )
+
+    if (exactNameMatch) {
+        return exactNameMatch
+    }
+
+    return options.find((pokemon) => 
+    pokemon.searchTerms.some(
+        (term) =>
+            normalizePokemonSearch(term) === normalizedName,
+    ))
+}

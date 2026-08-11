@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { fetchBattleData, fetchPokemonIndex, getAssetUrl } from "./api/champions"
 import { getTopRowsByCategory, getTopPercentageRowsByCategory } from "./data/battleData"
-import { buildPokemonSearchOptions } from "./data/pokemon"
+import { buildPokemonSearchOptions, findPokemonSearchOption } from "./data/pokemon"
 import type { BattleRow } from "./types/battleData"
 import type { PokemonIndexEntry, PokemonSearchOption } from "./types/pokemon"
 import UsageBarChart from './components/UsageBarChart'
@@ -73,6 +73,13 @@ function App(){
     battleRows,
     'teammate',
   )
+  const teammateItems = teammateRows.map((row) => ({
+    row,
+    pokemon: findPokemonSearchOption(
+      pokemonOptions,
+      row.name,
+    ),
+  }))
   
   // load the roster on app start
   useEffect(() => {
@@ -212,7 +219,7 @@ function App(){
               </p>
             )
           ) : teammateRows.length > 0 ? (
-            <TeammateRanking rows={teammateRows} />
+            <TeammateRanking items={teammateItems} />
           ) : (
             <p>No teammate data available.</p>
           )}
