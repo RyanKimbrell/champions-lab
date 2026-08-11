@@ -1,31 +1,41 @@
 import { useEffect, useState } from "react"
 import { fetchBattleData, fetchPokemonIndex, getAssetUrl } from "./api/champions"
-import { getTopRowsByCategory } from "./data/battleData"
+import { getTopRowsByCategory, getTopPercentageRowsByCategory } from "./data/battleData"
 import { buildPokemonSearchOptions } from "./data/pokemon"
 import type { BattleRow } from "./types/battleData"
 import type { PokemonIndexEntry, PokemonSearchOption } from "./types/pokemon"
 import UsageBarChart from './components/UsageBarChart'
 import PokemonSearch from "./components/PokemonSearch"
+import TeammateRanking from "./components/TeammateRanking"
 
-const usageCategories = [
+const battleCategories = [
   {
     key: 'move',
     label: 'Moves',
-    title: 'Move Usage'
+    title: 'Move Usage',
+    visualization: 'percentage',
   },
   {
     key: 'held_item',
     label: 'Items',
     title: 'Held Item Usage',
+    visualization: 'percentage',
   },
   {
     key: 'ability',
     label: 'Abilities',
-    title: 'Ability Usage'
+    title: 'Ability Usage',
+    visualization: 'percentage'
   },
+  {
+    key: 'teammate',
+    label:'Teammates',
+    title: 'Common Teammates',
+    visualization: 'ranking',
+  }
 ] as const
 
-type UsageCategory = (typeof usageCategories)[number]['key']
+type BattleCategory = (typeof battleCategories)[number]['key']
 
 function App(){
 
@@ -35,7 +45,7 @@ function App(){
 
   // State declarations
   const [battleRows, setBattleRows] = useState<BattleRow[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<UsageCategory>('move')
+  const [selectedCategory, setSelectedCategory] = useState<BattleCategory>('move')
   const [error, setError] = useState<string | null>(null)
   const [selectedPokemon, setSelectedPokemon] = useState('garchomp')
   const [pokemonName, setPokemonName] = useState('')
@@ -52,13 +62,16 @@ function App(){
         pokemon.battleDataId === selectedPokemon &&
       !pokemon.usesBaseBattleData
   )
-  const categoryConfig = usageCategories.find(
+  const categoryConfig = battleCategories.find(
     (category) => category.key === selectedCategory,
   )!
-
-  const chartRows = getTopRowsByCategory(
+  const chartRows = getTopPercentageRowsByCategory(
     battleRows,
     selectedCategory,
+  )
+  const teammateRows = getTopRowsByCategory(
+    battleRows,
+    'teammate',
   )
   
   // load the roster on app start
@@ -170,7 +183,7 @@ function App(){
             role="group"
             aria-label="Battle data category"
           >
-            {usageCategories.map((category) => (
+            {battleCategories.map((category) => (
               <button
                 key={category.key}
                 type="button"
@@ -187,13 +200,21 @@ function App(){
             ))}
           </div>
 
-          {chartRows.length > 0 ? (
-            <UsageBarChart
-              title={categoryConfig.title}
-              rows={chartRows}
-            />
+          {categoryConfig.visualization === 'percentage' ? (
+            chartRows.length > 0 ? (
+              <UsageBarChart
+                title={categoryConfig.title}
+                rows={chartRows}
+              />
+            ) : (
+              <p>
+                No {categoryConfig.label.toLowerCase()} data available.
+              </p>
+            )
+          ) : teammateRows.length > 0 ? (
+            <TeammateRanking rows={teammateRows} />
           ) : (
-            <p> No {categoryConfig.label.toLowerCase()} data available.</p>
+            <p>No teammate data available.</p>
           )}
         </>
       ) : (

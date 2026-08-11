@@ -4,13 +4,20 @@ export function getTopRowsByCategory(
   rows: BattleRow[],
   category: string,
   limit = 10,
-): PercentageBattleRow[] {
+): BattleRow [] {
   return rows
-    .filter(
-      (row): row is PercentageBattleRow => 
-        row.category === category &&
-        row.percentage_value !== null,
-    )
+    .filter((row) => row.category === category)
     .sort((a, b) => a.rank - b.rank)
     .slice(0, limit)
+}
+
+export function getTopPercentageRowsByCategory(
+  rows: BattleRow[],
+  category: string,
+  limit = 10,
+): PercentageBattleRow[] {
+  return getTopRowsByCategory(rows, category, limit).filter(
+    (row): row is PercentageBattleRow =>
+      row.percentage_value !== null,
+  )
 }
