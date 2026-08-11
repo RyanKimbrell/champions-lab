@@ -3,10 +3,20 @@ import { getAssetUrl } from '../api/champions'
 import { matchesPokemonSearch } from '../data/pokemon'
 import type { PokemonSearchOption } from '../types/pokemon'
 
+
+/*============
+* Interfaces
+*============*/
+
 interface PokemonSearchProps {
   options: PokemonSearchOption[]
   onSelect: (pokemon: PokemonSearchOption) => void
 }
+
+
+/*============
+* Functions
+*============*/
 
 function PokemonSearch({
   options,

@@ -1,4 +1,4 @@
-import type { BattleDataResponse } from '../types/battleData'
+import type { BattleDataResponse, BattleHistoryResponse } from '../types/battleData'
 import type { PokemonIndexEntry, PokemonIndexResponse } from '../types/pokemon'
 
 const SITE_BASE_URL = 'https://championsbattledata.com'
@@ -34,4 +34,21 @@ export async function fetchPokemonIndex(): Promise<PokemonIndexEntry[]> {
 
 export function getAssetUrl(path:string): string {
     return new URL(path, `${SITE_BASE_URL}/`).toString()
+}
+
+export async function fetchBattleHistory(
+    pokemon: string,
+    days = 7,
+): Promise<BattleHistoryResponse> {
+    const response = await fetch(
+        `${API_BASE_URL}/battle/Doubles/${pokemon}?days=${days}`,
+    )
+
+    if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`)
+    }
+
+    const data: BattleHistoryResponse = await response.json()
+
+    return data
 }

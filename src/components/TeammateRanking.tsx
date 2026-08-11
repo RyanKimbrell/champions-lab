@@ -2,6 +2,13 @@ import { getAssetUrl } from '../api/champions'
 import type { BattleRow } from '../types/battleData'
 import type { PokemonSearchOption } from '../types/pokemon'
 
+
+
+
+/*============
+* Interfaces
+*============*/
+
 interface TeammateRankingItem {
     row: BattleRow
     pokemon:PokemonSearchOption | undefined
@@ -11,6 +18,12 @@ interface TeammateRankingProps {
     items: TeammateRankingItem[]
     onSelect: (pokemon: PokemonSearchOption) => void
 }
+
+
+/*============
+* Functions
+*============*/
+
 
 function TeammateRanking({
     items,

@@ -18,3 +18,19 @@ export interface BattleDataResponse {
     season: string
     rows: BattleRow[]
 }
+
+export interface DailyBattleSnapshot {
+    season: string
+    date: string
+    source: string
+    rows: BattleRow[]
+}
+
+export interface BattleHistoryResponse {
+    pokemon: string
+    showdownId: string
+    format: string
+    requestedDays: number
+    season: string
+    daily: DailyBattleSnapshot[]
+}

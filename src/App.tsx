@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react"
-import { fetchBattleData, fetchPokemonIndex, getAssetUrl } from "./api/champions"
+import { fetchBattleData, fetchPokemonIndex, getAssetUrl, fetchBattleHistory } from "./api/champions"
 import { getTopRowsByCategory, getTopPercentageRowsByCategory } from "./data/battleData"
 import { buildPokemonSearchOptions, findPokemonSearchOption } from "./data/pokemon"
 import type { BattleRow } from "./types/battleData"
 import type { PokemonIndexEntry, PokemonSearchOption } from "./types/pokemon"
+import { getMoveUsageHistory, type UsageHistoryPoint } from "./data/history"
 import UsageBarChart from './components/UsageBarChart'
 import PokemonSearch from "./components/PokemonSearch"
 import TeammateRanking from "./components/TeammateRanking"
+import UsageHistoryChart from "./components/UsageHistoryChart"
+
 
 const battleCategories = [
   {
@@ -51,6 +54,8 @@ function App(){
   const [pokemonName, setPokemonName] = useState('')
   const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([])
   const [selectedPokemonOption, setSelectedPokemonOption] = useState<PokemonSearchOption | null>(null)
+  const [moveHistory, setMoveHistory] = useState<UsageHistoryPoint[]>([])
+  const [historyMoveName, setHistoryMoveName] = useState('')
   
 
   // Variable derivations
@@ -112,7 +117,10 @@ function App(){
         setBattleRows([])
         setError(null)
         setPokemonName('')
+        setMoveHistory([])
+        setHistoryMoveName('')
 
+        // fetching the current battle data
         const data = await fetchBattleData(selectedPokemon)
 
         setPokemonName(data.pokemon)
@@ -123,6 +131,27 @@ function App(){
 
         setBattleRows(data.rows)
 
+        //fetching historic data
+        const history = await fetchBattleHistory(selectedPokemon, 7)
+        const topMove = getTopPercentageRowsByCategory(
+          data.rows,
+          'move',
+          1,
+        )[0]
+
+        if (topMove) {
+
+          const usageHistory = getMoveUsageHistory(
+            history.daily,
+            topMove.name,
+          )
+
+          setHistoryMoveName(topMove.name)
+          setMoveHistory(usageHistory)
+        }
+
+
+
       } catch (error) {
         if (error instanceof Error) {
           setError(error.message)
@@ -130,6 +159,10 @@ function App(){
           setError('An unknown error occurred')
         }
       }
+
+
+
+
     }
 
     //function call
@@ -226,6 +259,14 @@ function App(){
           ) : (
             <p>No teammate data available.</p>
           )}
+
+          {moveHistory.length > 0 && (
+            <UsageHistoryChart
+              title={`${historyMoveName} Usage - Last 7 Days`}
+              data={moveHistory}
+            />
+          )}
+
         </>
       ) : (
         <p>Loading move data...</p>

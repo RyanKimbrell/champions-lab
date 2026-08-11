@@ -1,9 +1,18 @@
 import type { PercentageBattleRow } from '../types/battleData'
 
+
+/*============
+* Interfaces
+*============*/
+
 interface UsageBarChartProps {
   title: string
   rows: PercentageBattleRow[]
 }
+
+/*============
+* Functions
+*============*/
 
 function UsageBarChart({
   title,
