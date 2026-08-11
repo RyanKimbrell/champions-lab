@@ -2,9 +2,9 @@ import { useEffect, useState } from "react"
 import { fetchBattleData, fetchPokemonIndex, getAssetUrl, fetchBattleHistory } from "./api/champions"
 import { getTopRowsByCategory, getTopPercentageRowsByCategory } from "./data/battleData"
 import { buildPokemonSearchOptions, findPokemonSearchOption } from "./data/pokemon"
-import type { BattleRow } from "./types/battleData"
+import type { BattleRow, DailyBattleSnapshot } from "./types/battleData"
 import type { PokemonIndexEntry, PokemonSearchOption } from "./types/pokemon"
-import { getMoveUsageHistory, type UsageHistoryPoint } from "./data/history"
+import { getMoveUsageHistory } from "./data/history"
 import UsageBarChart from './components/UsageBarChart'
 import PokemonSearch from "./components/PokemonSearch"
 import TeammateRanking from "./components/TeammateRanking"
@@ -54,8 +54,8 @@ function App(){
   const [pokemonName, setPokemonName] = useState('')
   const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([])
   const [selectedPokemonOption, setSelectedPokemonOption] = useState<PokemonSearchOption | null>(null)
-  const [moveHistory, setMoveHistory] = useState<UsageHistoryPoint[]>([])
-  const [historyMoveName, setHistoryMoveName] = useState('')
+  const [historySnapshots, setHistorySnapshots] = useState<DailyBattleSnapshot[]>([])
+  const [selectedHistoryMove, setSelectedHistoryMove] = useState('')
   
 
   // Variable derivations
@@ -85,7 +85,18 @@ function App(){
       row.name,
     ),
   }))
-  
+  const historyMoveOptions = getTopPercentageRowsByCategory(
+    battleRows,
+    'move',
+    10,
+  )
+  const moveHistory = selectedHistoryMove ? getMoveUsageHistory(
+    historySnapshots,
+    selectedHistoryMove,
+  ) : []
+
+
+
   // load the roster on app start
   useEffect(() => {
 
@@ -117,8 +128,8 @@ function App(){
         setBattleRows([])
         setError(null)
         setPokemonName('')
-        setMoveHistory([])
-        setHistoryMoveName('')
+        setHistorySnapshots([])
+        setSelectedHistoryMove('')
 
         // fetching the current battle data
         const data = await fetchBattleData(selectedPokemon)
@@ -132,7 +143,13 @@ function App(){
         setBattleRows(data.rows)
 
         //fetching historic data
-        const history = await fetchBattleHistory(selectedPokemon, 7)
+        const history = await fetchBattleHistory(
+          selectedPokemon,
+          7,
+        )
+
+        setHistorySnapshots(history.daily)
+
         const topMove = getTopPercentageRowsByCategory(
           data.rows,
           'move',
@@ -140,14 +157,7 @@ function App(){
         )[0]
 
         if (topMove) {
-
-          const usageHistory = getMoveUsageHistory(
-            history.daily,
-            topMove.name,
-          )
-
-          setHistoryMoveName(topMove.name)
-          setMoveHistory(usageHistory)
+          setSelectedHistoryMove(topMove.name)
         }
 
 
@@ -260,11 +270,42 @@ function App(){
             <p>No teammate data available.</p>
           )}
 
-          {moveHistory.length > 0 && (
-            <UsageHistoryChart
-              title={`${historyMoveName} Usage - Last 7 Days`}
-              data={moveHistory}
-            />
+          {historySnapshots.length > 0 && (
+            <section className="history-explorer">
+              <div className="history-controls">
+                <label htmlFor="history-move">
+                  Historical Move Usage
+                </label>
+
+                <select
+                  id="history-move"
+                  value={selectedHistoryMove}
+                  onChange={(event) =>
+                    setSelectedHistoryMove(event.target.value)
+                  }
+                >
+                  {historyMoveOptions.map((move) => (
+                    <option
+                      key={move.name}
+                      value={move.name}
+                    >
+                      {move.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {moveHistory.length >= 2 ? (
+                <UsageHistoryChart
+                  title={`${selectedHistoryMove} Usage - Last 7 Days`}
+                  data={moveHistory}
+                />
+              ) : (
+                <p>
+                  Not enough historical data for {selectedHistoryMove}.
+                </p>
+              )}
+            </section>
           )}
 
         </>
