@@ -117,3 +117,32 @@ main {
 .pokemon-suggestion-active {
   background: #f3f3f3;
 }
+
+.category-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 2rem 0 1rem;
+}
+
+.category-button {
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+}
+
+.category-button:hover {
+  background: #f3f3f3;
+}
+
+.category-button-active {
+  background: #333;
+  color: white;
+  border-color: #333;
+}
+
+.category-button-active:hover {
+  background: #333;
+}

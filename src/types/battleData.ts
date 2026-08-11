@@ -4,6 +4,10 @@ export interface BattleRow {
     rank: number
     name: string
     percentage: string
+    percentage_value: number | null
+}
+
+export type PercentageBattleRow = BattleRow & {
     percentage_value: number
 }
 

@@ -1,12 +1,31 @@
 import { useEffect, useState } from "react"
 import { fetchBattleData, fetchPokemonIndex, getAssetUrl } from "./api/champions"
-import { getTopMoves } from "./data/moves"
+import { getTopRowsByCategory } from "./data/battleData"
 import { buildPokemonSearchOptions } from "./data/pokemon"
-import PokemonSearch from "./components/PokemonSearch"
 import type { BattleRow } from "./types/battleData"
 import type { PokemonIndexEntry, PokemonSearchOption } from "./types/pokemon"
+import UsageBarChart from './components/UsageBarChart'
+import PokemonSearch from "./components/PokemonSearch"
 
+const usageCategories = [
+  {
+    key: 'move',
+    label: 'Moves',
+    title: 'Move Usage'
+  },
+  {
+    key: 'held_item',
+    label: 'Items',
+    title: 'Held Item Usage',
+  },
+  {
+    key: 'ability',
+    label: 'Abilities',
+    title: 'Ability Usage'
+  },
+] as const
 
+type UsageCategory = (typeof usageCategories)[number]['key']
 
 function App(){
 
@@ -15,9 +34,9 @@ function App(){
   * ===============================*/
 
   // State declarations
-  const [moves, setMoves] = useState<BattleRow[]>([])
+  const [battleRows, setBattleRows] = useState<BattleRow[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<UsageCategory>('move')
   const [error, setError] = useState<string | null>(null)
-  //const [searchInput, setSearchInput] = useState('garchomp')
   const [selectedPokemon, setSelectedPokemon] = useState('garchomp')
   const [pokemonName, setPokemonName] = useState('')
   const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([])
@@ -32,8 +51,16 @@ function App(){
       (pokemon) =>
         pokemon.battleDataId === selectedPokemon &&
       !pokemon.usesBaseBattleData
-    )
+  )
+  const categoryConfig = usageCategories.find(
+    (category) => category.key === selectedCategory,
+  )!
 
+  const chartRows = getTopRowsByCategory(
+    battleRows,
+    selectedCategory,
+  )
+  
   // load the roster on app start
   useEffect(() => {
 
@@ -62,7 +89,7 @@ function App(){
 
       try {
 
-        setMoves([])
+        setBattleRows([])
         setError(null)
         setPokemonName('')
 
@@ -70,13 +97,12 @@ function App(){
 
         setPokemonName(data.pokemon)
 
-        const moveRows = getTopMoves(data.rows)
-
-        if (moveRows.length === 0) {
-          throw new Error('No top move found')
+        if (data.rows.length === 0) {
+          throw new Error('No battle data found')
         }
 
-        setMoves(moveRows)
+        setBattleRows(data.rows)
+
       } catch (error) {
         if (error instanceof Error) {
           setError(error.message)
@@ -136,24 +162,40 @@ function App(){
       )}
 
       {error ? (
-        <p>Unable to load move data: {error}</p>
-      ) : moves.length > 0 ? (
-       <div className="move-chart">
-        {moves.map((move) => (
-          <div className="move-row" key={move.name}>
-            <div className="move-label">
-              <span>{move.name}</span>
-              <span>{move.percentage}</span>
-            </div>
-            <div className="move-track">
-              <div 
-                className="move-bar"
-                style={{ width: `${move.percentage_value}%` }}
-              />
-            </div>
+        <p>Unable to load battle data: {error}</p>
+      ) : battleRows.length > 0 ? (
+        <>
+          <div
+            className="category-switcher"
+            role="group"
+            aria-label="Battle data category"
+          >
+            {usageCategories.map((category) => (
+              <button
+                key={category.key}
+                type="button"
+                className={
+                  selectedCategory === category.key
+                  ? 'category-button category-button-active'
+                  : 'category-button'
+                }
+                aria-pressed={selectedCategory === category.key}
+                onClick={() => setSelectedCategory(category.key)}
+              >
+                {category.label}
+              </button>
+            ))}
           </div>
-        ))}
-       </div>
+
+          {chartRows.length > 0 ? (
+            <UsageBarChart
+              title={categoryConfig.title}
+              rows={chartRows}
+            />
+          ) : (
+            <p> No {categoryConfig.label.toLowerCase()} data available.</p>
+          )}
+        </>
       ) : (
         <p>Loading move data...</p>
       )}
