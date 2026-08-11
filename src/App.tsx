@@ -10,6 +10,9 @@ import PokemonSearch from "./components/PokemonSearch"
 import TeammateRanking from "./components/TeammateRanking"
 import UsageHistoryChart from "./components/UsageHistoryChart"
 
+/*============
+* Global Constants
+*============*/
 
 const battleCategories = [
   {
@@ -38,7 +41,21 @@ const battleCategories = [
   }
 ] as const
 
+const historyRanges = [7, 14, 31] as const 
+
+
+/*================
+* Global Types
+*================*/
+
 type BattleCategory = (typeof battleCategories)[number]['key']
+type HistoryRange = (typeof historyRanges)[number]
+
+
+
+/*================
+* App Main Function
+*================*/
 
 function App(){
 
@@ -56,6 +73,7 @@ function App(){
   const [selectedPokemonOption, setSelectedPokemonOption] = useState<PokemonSearchOption | null>(null)
   const [historySnapshots, setHistorySnapshots] = useState<DailyBattleSnapshot[]>([])
   const [selectedHistoryMove, setSelectedHistoryMove] = useState('')
+  const [selectedHistoryDays, setSelectedHistoryDays] = useState<HistoryRange>(7)
   
 
   // Variable derivations
@@ -95,9 +113,11 @@ function App(){
     selectedHistoryMove,
   ) : []
 
+  /*===========================
+  * State Change useEffects
+  * ==========================*/
 
-
-  // load the roster on app start
+  // Loading Pokemon Index Data
   useEffect(() => {
 
     //function definition
@@ -113,11 +133,31 @@ function App(){
     loadPokemonIndex()
   }, [])
 
-/*===========================
-* State Changing Hooks
-* ==========================*/
+  // Loading Historic Battle Data
+  useEffect(() => {
+    async function loadBattleHistory() {
+      try {
+        setHistorySnapshots([])
 
-  // fetching pokemon battle data
+        const history = await fetchBattleHistory(
+          selectedPokemon,
+          selectedHistoryDays,
+        )
+
+        setHistorySnapshots(history.daily)
+      } catch (error) {
+        console.error(
+          'Unable to load battle history:',
+          error,
+        )
+      }
+    }
+
+    loadBattleHistory()
+  }, [selectedPokemon, selectedHistoryDays])
+
+
+  // Fetching Pokemon Battle Data, and Rendering
   useEffect(() => {
 
     //function definition
@@ -128,7 +168,6 @@ function App(){
         setBattleRows([])
         setError(null)
         setPokemonName('')
-        setHistorySnapshots([])
         setSelectedHistoryMove('')
 
         // fetching the current battle data
@@ -141,14 +180,6 @@ function App(){
         }
 
         setBattleRows(data.rows)
-
-        //fetching historic data
-        const history = await fetchBattleHistory(
-          selectedPokemon,
-          7,
-        )
-
-        setHistorySnapshots(history.daily)
 
         const topMove = getTopPercentageRowsByCategory(
           data.rows,
@@ -277,6 +308,28 @@ function App(){
                   Historical Move Usage
                 </label>
 
+                <div
+                  className="history-range-switcher"
+                  role="group"
+                  aria-label="Historical Date Range"
+                >
+                  {historyRanges.map((days) => (
+                    <button
+                      key={days}
+                      type="button"
+                      className={
+                        selectedHistoryDays === days
+                        ? 'history-range-button history-range-button-active'
+                        : 'history-range-button'
+                      }
+                      aria-pressed={selectedHistoryDays === days}
+                      onClick={() => setSelectedHistoryDays(days)}
+                    >
+                      {days} Days
+                    </button>
+                  ))}
+                </div>
+
                 <select
                   id="history-move"
                   value={selectedHistoryMove}
@@ -297,7 +350,7 @@ function App(){
 
               {moveHistory.length >= 2 ? (
                 <UsageHistoryChart
-                  title={`${selectedHistoryMove} Usage - Last 7 Days`}
+                  title={`${selectedHistoryMove} Usage - Last ${selectedHistoryDays} Days`}
                   data={moveHistory}
                 />
               ) : (
