@@ -56,3 +56,21 @@ The first new analytical system after the pivot will focus on recurring Pokémon
 - Which Pokémon commonly complete the core?
 - Does the core appear disproportionately on successful teams?
 - How does the core change over time?
+
+
+
+## 2026-08-13 — Mega Evolution is modeled as a transformation, not a team identity
+
+### Decision
+
+A Pokémon capable of Mega Evolution is represented on a team by its pre-transformation Pokémon identity and held Mega Stone.
+
+For example, an Audino carrying Audinite is represented as Audino with Audinite, not as a separate Mega Audino team member.
+
+Mega forms will be modeled as possible or observed battle transformations.
+
+### Why
+
+Mega Evolution occurs during battle and is not a separately selected team slot. A Pokémon carrying its Mega Stone may also not necessarily Mega Evolve during a particular battle.
+
+This distinction prevents team-structure analytics from incorrectly treating base and Mega states as separate Pokémon while still allowing transformed stats, typing, abilities, and other battle-state information to be modeled when relevant.
