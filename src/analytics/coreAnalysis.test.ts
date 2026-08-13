@@ -7,6 +7,8 @@ import {
   calculatePokemonUsage,
   countTeamsWithPair,
   countTeamsWithPokemon,
+  analyzeCoreComplements,
+  countTeamsWithAllPokemon
 } from './coreAnalysis'
 
 const teams = coreAnalysisFixture.teams
@@ -133,6 +135,131 @@ describe('core analysis', () => {
                     'missing-pokemon',
                 ),
             ).toBeNull()
+        })
+    })
+
+    describe('countTeamsWithAllPokemon', () => {
+        it('counts teams containing a three-Pokémon core', () => {
+            expect(
+                countTeamsWithAllPokemon(
+                    teams,
+                    [
+                    'garchomp',
+                    'sinistcha',
+                    'incineroar',
+                    ],
+                ),
+            ).toBe(3)
+        })
+
+        it('ignores duplicate Pokémon IDs in the requested core', () => {
+            expect(
+                countTeamsWithAllPokemon(
+                    teams,
+                    [
+                    'garchomp',
+                    'sinistcha',
+                    'garchomp',
+                    ],
+                ),
+            ).toBe(3)
+        })
+    })
+
+    describe('analyzeCoreComplements', () => {
+        it('discovers Incineroar as the most common complement to Garchomp and Sinistcha', () => {
+            const complements =
+            analyzeCoreComplements(
+                teams,
+                [
+                'garchomp',
+                'sinistcha',
+                ],
+            )
+
+            expect(complements[0]?.pokemonId)
+            .toBe('incineroar')
+
+            expect(complements[0]?.teamCount)
+            .toBe(3)
+
+            expect(
+            complements[0]?.conditionalUsage,
+            ).toBeCloseTo(1)
+
+            expect(
+            complements[0]?.overallUsage,
+            ).toBeCloseTo(0.8)
+
+            expect(complements[0]?.lift)
+            .toBeCloseTo(1.25)
+        })
+
+        it('finds Whimsicott as a frequent core complement', () => {
+            const complements =
+            analyzeCoreComplements(
+                teams,
+                [
+                'garchomp',
+                'sinistcha',
+                ],
+            )
+
+            const whimsicott =
+            complements.find(
+                (complement) =>
+                complement.pokemonId ===
+                'whimsicott',
+            )
+
+            expect(whimsicott).toBeDefined()
+
+            expect(whimsicott?.teamCount)
+            .toBe(2)
+
+            expect(
+            whimsicott?.conditionalUsage,
+            ).toBeCloseTo(2 / 3)
+
+            expect(
+            whimsicott?.overallUsage,
+            ).toBeCloseTo(0.5)
+
+            expect(whimsicott?.lift)
+            .toBeCloseTo(4 / 3)
+        })
+
+        it('does not return Pokémon already in the core', () => {
+            const complements =
+            analyzeCoreComplements(
+                teams,
+                [
+                'garchomp',
+                'sinistcha',
+                ],
+            )
+
+            expect(
+                complements.some(
+                    (complement) =>
+                    complement.pokemonId ===
+                        'garchomp' ||
+                    complement.pokemonId ===
+                        'sinistcha',
+                ),
+            ).toBe(false)
+        })
+
+        it('returns an empty result when the core does not occur', () => {
+            expect(
+                analyzeCoreComplements(
+                    teams,
+                    [
+                    'garchomp',
+                    'missing-pokemon',
+                    ],
+                ),
+            ).toEqual([])
         })
     })
 })

@@ -11,24 +11,40 @@ export function countTeamsWithPokemon(
     ).length
 }
 
+export function countTeamsWithAllPokemon(
+    teams: Team[],
+    pokemonIds: string[],
+): number {
+    const uniquePokemonIds = [
+        ...new Set(pokemonIds),
+    ]
+
+    if (uniquePokemonIds.length === 0) {
+        return 0
+    }
+
+    return teams.filter((team) =>
+        uniquePokemonIds.every((pokemonId) =>
+            team.members.some(
+                (member) =>
+                    member.pokemonId === pokemonId
+            ),
+        ),
+    ).length
+}
+
 export function countTeamsWithPair(
     teams: Team[],
     firstPokemonId: string,
     secondPokemonId: string,
 ): number {
-    return teams.filter((team) => {
-        const hasFirstPokemon = team.members.some(
-            (member) =>
-                member.pokemonId === firstPokemonId,
-        )
-
-        const hasSecondPokemon = team.members.some(
-            (member) =>
-                member.pokemonId === secondPokemonId,
-        )
-
-        return hasFirstPokemon && hasSecondPokemon
-    }).length
+    return countTeamsWithAllPokemon(
+        teams,
+        [
+            firstPokemonId,
+            secondPokemonId,
+        ],
+    )
 }
 
 export function calculatePokemonUsage(
@@ -223,4 +239,112 @@ export function analyzePokemonPartners(
 
             return b.lift - a.lift
         })
+}
+
+export interface CoreComplementAnalysis {
+    pokemonId: string
+    teamCount: number
+    conditionalUsage: number
+    overallUsage: number
+    lift: number
+}
+
+export function analyzeCoreComplements(
+    teams: Team[],
+    corePokemonIds: string[],
+): CoreComplementAnalysis[] {
+    const uniqueCoreIds = [
+        ...new Set(corePokemonIds),
+    ]
+
+    if (uniqueCoreIds.length === 0) {
+        return []
+    }
+
+    const coreTeamCount =
+        countTeamsWithAllPokemon(
+            teams,
+            uniqueCoreIds,
+    )
+
+    if (coreTeamCount === 0) {
+        return []
+    }
+
+    const coreIdSet = new Set(uniqueCoreIds)
+
+    const coreTeams = teams.filter((team) =>
+        uniqueCoreIds.every((pokemonId) =>
+            team.members.some(
+                (member) =>
+                    member.pokemonId === pokemonId,
+            ),
+        ),
+    )
+
+    const candidatePokemonIds =
+        new Set<string>()
+
+    for (const team of coreTeams) {
+        for (const member of team.members) {
+            if (
+                !coreIdSet.has(member.pokemonId)
+            ) {
+                candidatePokemonIds.add(
+                    member.pokemonId,
+                )
+            }
+        }
+    }
+
+    return [...candidatePokemonIds]
+    .map((pokemonId) => {
+        const teamCount =
+            countTeamsWithAllPokemon(
+                teams,
+                [
+                    ...uniqueCoreIds,
+                    pokemonId,
+                ],
+            )
+
+        const conditionalUsage =
+            teamCount / coreTeamCount
+
+        const overallUsage =
+            calculatePokemonUsage(
+                teams,
+                pokemonId,
+            )
+
+        if (
+            overallUsage === null ||
+            overallUsage === 0
+        ) {
+            return null
+        }
+
+        return {
+            pokemonId,
+            teamCount,
+            conditionalUsage,
+            overallUsage,
+            lift:
+                conditionalUsage /
+                overallUsage,
+        }
+    })
+    .filter(
+    (
+        analysis,
+    ): analysis is CoreComplementAnalysis =>
+        analysis !== null,
+    )
+    .sort((a, b) => {
+        if (b.teamCount !== a.teamCount) {
+            return b.teamCount - a.teamCount
+        }
+
+        return b.lift - a.lift
+    })
 }
