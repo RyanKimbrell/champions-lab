@@ -2,8 +2,8 @@ import type { SourceRecord } from "./source";
 
 export interface TeamMember {
     pokemonId: string
-    heldItemId: string | null
-    initialAbilityId: string
+    heldItemId?: string | null
+    initialAbilityId?: string
     moveIds?: string[]
 }
 
