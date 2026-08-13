@@ -286,3 +286,19 @@ main {
   height: 0.8rem;
   border-radius: 50%;
 }
+
+.history-legend-change {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.move-change-chart {
+  margin-top: 3rem;
+}
+
+.move-change-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}

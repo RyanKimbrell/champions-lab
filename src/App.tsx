@@ -4,11 +4,12 @@ import { getTopRowsByCategory, getTopPercentageRowsByCategory } from "./data/bat
 import { buildPokemonSearchOptions, findPokemonSearchOption } from "./data/pokemon"
 import type { BattleRow, DailyBattleSnapshot } from "./types/battleData"
 import type { PokemonIndexEntry, PokemonSearchOption } from "./types/pokemon"
-import { getMoveUsageHistory } from "./data/history"
+import { getMoveUsageHistory, getMoveUsageChanges } from "./data/history"
 import UsageBarChart from './components/UsageBarChart'
 import PokemonSearch from "./components/PokemonSearch"
 import TeammateRanking from "./components/TeammateRanking"
 import UsageHistoryChart from "./components/UsageHistoryChart"
+import MoveUsageChangeChart from "./components/MoveUsageChangeChart"
 
 /*============
 * Global Constants
@@ -119,8 +120,13 @@ function App(){
     .filter(
       (historySeries) =>
         historySeries.data.length >= 2,
-    )
+  )
 
+  const moveUsageChanges = getMoveUsageChanges(
+    historySnapshots,
+    historyMoveOptions.map((move) => move.name),
+  )
+  
   /*===========================
   * State Change useEffects
   * ==========================*/
@@ -409,6 +415,13 @@ function App(){
                 <p>
                   Not enough historical data for the selected moves.
                 </p>
+              )}
+
+              {moveUsageChanges.length > 0 && (
+                <MoveUsageChangeChart
+                  title={`Biggest Move Changes - Last ${selectedHistoryDays} Days`}
+                  data={moveUsageChanges}
+                />
               )}
             </section>
           )}

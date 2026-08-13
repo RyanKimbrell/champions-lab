@@ -1,5 +1,6 @@
 import { extent, line, max, min, scaleLinear, scaleTime, scaleOrdinal, schemeTableau10 } from 'd3'
 import { useState } from 'react'
+import { getUsageChange } from '../data/history'
 import type { UsageHistoryPoint } from '../data/history'
 
 
@@ -123,23 +124,36 @@ function UsageHistoryChart({
             <h3>{title}</h3>
 
             <div className="history-legend">
-                {series.map((historySeries) => (
-                    <div
-                    className="history-legend-item"
-                    key={historySeries.name}
-                    >
-                    <span
-                        className="history-legend-swatch"
-                        style={{
-                        background: colorScale(
-                            historySeries.name,
-                        ),
-                        }}
-                    />
+                {series.map((historySeries) => {
+                    const change = getUsageChange(
+                        historySeries.data,
+                    )
 
-                    <span>{historySeries.name}</span>
-                    </div>
-                ))}
+                    return (
+                        <div
+                            className="history-legend-item"
+                            key={historySeries.name}
+                        >
+                            <span
+                                className="history-legend-swatch"
+                                style={{
+                                    background: colorScale(
+                                    historySeries.name,
+                                    ),
+                                }}
+                            />
+
+                            <span>{historySeries.name}</span>
+
+                            {change && (
+                                <span className="history-legend-change">
+                                    {change.delta >= 0 ? '+' : ''}
+                                    {change.delta.toFixed(1)} pp
+                                </span>
+                            )}
+                        </div>
+                    )
+                })}
             </div>
 
             <svg
