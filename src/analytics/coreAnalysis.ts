@@ -121,3 +121,106 @@ export function calculatePairLift(
         (firstUsage * secondUsage)
     )
 }
+
+export interface PokemonPartnerAnalysis {
+    pokemonId: string
+    pairCount: number
+    support: number
+    conditionalUsage: number
+    lift:number
+}
+
+function getUniquePokemonIds(
+    teams: Team[],
+): string[] {
+    const pokemonIds = new Set<string>()
+
+    for (const team of teams) {
+        for (const member of team.members) {
+            pokemonIds.add(member.pokemonId)
+        }
+    }
+
+    return [...pokemonIds]
+}
+
+export function analyzePokemonPartners(
+    teams: Team[],
+    focalPokemonId: string,
+): PokemonPartnerAnalysis[] {
+    const focalPokemonCount =
+        countTeamsWithPokemon(
+            teams,
+            focalPokemonId,
+        )
+    if (
+        teams.length === 0 ||
+        focalPokemonCount === 0
+    ) {
+        return []
+    }
+
+    const candidatePokemonIds = 
+        getUniquePokemonIds(teams)
+            .filter(
+                (pokemonId) =>
+                    pokemonId !== focalPokemonId,
+            )
+
+    return candidatePokemonIds
+        .map((pokemonId) => {
+            const pairCount = countTeamsWithPair(
+                teams,
+                focalPokemonId,
+                pokemonId,
+            )
+
+            const support = calculatePairSupport(
+                teams,
+                focalPokemonId,
+                pokemonId,
+            )
+
+            const conditionalUsage = calculateConditionalUsage(
+                teams,
+                pokemonId,
+                focalPokemonId
+            )
+
+            const lift = calculatePairLift(
+                teams,
+                focalPokemonId,
+                pokemonId,
+            )
+
+            if (
+                pairCount === 0 ||
+                support === null ||
+                conditionalUsage === null ||
+                lift === null
+            ) {
+                return null
+            }
+
+            return {
+                pokemonId,
+                pairCount,
+                support,
+                conditionalUsage,
+                lift,
+            }
+        })
+        .filter(
+            (
+                analysis,
+            ): analysis is PokemonPartnerAnalysis =>
+                analysis !== null,
+        )
+        .sort((a, b) => {
+            if (b.pairCount !== a.pairCount) {
+                return b.pairCount - a.pairCount
+            }
+
+            return b.lift - a.lift
+        })
+}
